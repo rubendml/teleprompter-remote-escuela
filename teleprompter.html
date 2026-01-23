@@ -14,12 +14,10 @@ html, body {
   overflow: hidden;
 }
 
-/* Contenedor */
 #container {
   position: relative;
 }
 
-/* Texto */
 #text {
   font-size: 64px;
   line-height: 1.5;
@@ -29,12 +27,10 @@ html, body {
   transition: all 0.4s ease;
 }
 
-/* Espejo */
 .mirror {
   transform: scaleX(-1);
 }
 
-/* Línea guía */
 #guide {
   position: fixed;
   top: 50%;
@@ -46,7 +42,6 @@ html, body {
   display: none;
 }
 
-/* Modo cámara */
 .camera #text {
   color: #f1f1e6;
   padding: 16vh 15vw;
@@ -67,6 +62,7 @@ html, body {
 
 <script>
 const WS_URL = "wss://teleprompter-ws-5ziy.onrender.com";
+const PIN = "1234";
 
 const socket = new WebSocket(WS_URL);
 const textEl = document.getElementById("text");
@@ -80,10 +76,10 @@ let cameraMode = false;
 let lastTime = null;
 
 /* WebSocket */
-socket.onopen = () => console.log("🟢 Teleprompter conectado");
-
 socket.onmessage = (e) => {
   const data = JSON.parse(e.data);
+
+  if (data.pin !== PIN) return; // 🔐 Seguridad
 
   switch (data.action) {
     case "text":
@@ -110,7 +106,7 @@ socket.onmessage = (e) => {
   }
 };
 
-/* Scroll ultra suave */
+/* Scroll suave */
 function animate(t) {
   if (!lastTime) lastTime = t;
   const delta = t - lastTime;

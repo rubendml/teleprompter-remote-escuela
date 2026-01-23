@@ -16,15 +16,16 @@ body {
   min-height: 100vh;
 }
 
-/* Logo */
-#logo {
-  text-align: center;
+/* Header con logo a la derecha */
+header {
+  display: flex;
+  justify-content: flex-end;
   margin-bottom: 10px;
 }
 
-#logo img {
-  max-width: 180px;
-  width: 60%;
+header img {
+  max-width: 160px;
+  width: 50%;
   height: auto;
 }
 
@@ -33,7 +34,7 @@ body {
   flex: 1;
 }
 
-textarea, input[type=file] {
+textarea, input[type=file], input[type=password] {
   width: 100%;
   margin-bottom: 10px;
   font-size: 16px;
@@ -49,15 +50,16 @@ button {
 }
 
 .green { background: #1abc9c; }
-.blue { background: #3498db; }
 .orange { background: #f39c12; }
 .purple { background: #9b59b6; }
+.blue { background: #3498db; }
 
 /* Pie */
 footer {
   text-align: center;
-  font-size: 13px;
-  color: #aaa;
+  font-size: 16px;
+  font-weight: bold;
+  color: #ffd700; /* amarillo */
   margin-top: 10px;
 }
 </style>
@@ -65,15 +67,17 @@ footer {
 
 <body>
 
-<div id="logo">
+<header>
   <img src="logo-escuela.svg" alt="Logo">
-</div>
+</header>
 
 <div id="content">
 
+<input type="password" id="pin" placeholder="PIN de control" value="1234">
+
 <input type="file" accept=".txt,.md,.docx" onchange="loadFile(event)">
 
-<textarea id="script" rows="7" placeholder="Texto del teleprompter…"></textarea>
+<textarea id="script" rows="6" placeholder="Texto del teleprompter…"></textarea>
 
 <button class="green" onclick="sendText()">📤 Enviar texto</button>
 <button class="orange" onclick="toggleCamera()">🎥 Modo Cámara</button>
@@ -94,8 +98,9 @@ const socket = new WebSocket("wss://teleprompter-ws-5ziy.onrender.com");
 let speed = 0;
 
 function send(action, value = null) {
+  const pin = document.getElementById("pin").value;
   if (socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ action, value }));
+    socket.send(JSON.stringify({ action, value, pin }));
   }
 }
 
