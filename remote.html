@@ -136,29 +136,22 @@ footer {
   color: var(--brand);
 }
 
-/* INSTALL BAR */
-#installBar {
-  position: fixed;
-  bottom: 70px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #1e293b;
-  padding: 10px 14px;
-  border-radius: 12px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  box-shadow: 0 10px 20px rgba(0,0,0,.4);
-  z-index: 1000;
+/* INSTALL BUTTON */
+#installBtn {
+  margin: 8px auto 0;
+  display: block;
+  background: transparent;
+  color: #94a3b8;
+  border: 1px dashed #475569;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 14px;
+  cursor: pointer;
 }
 
-#installBar button {
-  background: #22c55e;
-  border: none;
-  border-radius: 8px;
-  padding: 6px 12px;
-  font-weight: bold;
-  cursor: pointer;
+#installBtn:hover {
+  color: #e5e7eb;
+  border-color: #e5e7eb;
 }
 </style>
 </head>
@@ -166,7 +159,7 @@ footer {
 <body>
 
 <header>
-  <img src="logo-escuela.svg" alt="Logo">
+  <img src="logo-escuela.svg" alt="Logo Escuela Judicial">
 </header>
 
 <main>
@@ -189,7 +182,7 @@ footer {
 <div class="card">
   <h3>📄 Texto</h3>
   <input type="file" accept=".txt,.md,.docx" onchange="loadFile(event)">
-  <textarea id="script"></textarea>
+  <textarea id="script" placeholder="Pega o carga el texto…"></textarea>
 </div>
 
 <div class="card buttons">
@@ -208,13 +201,8 @@ footer {
 
 <footer>
   Creaciones Manotas
+  <button id="installBtn" onclick="installApp()">📲 Instalar aplicación</button>
 </footer>
-
-<!-- INSTALL -->
-<div id="installBar">
-  <span>📲 ¿Instalar como app?</span>
-  <button onclick="installApp()">Instalar</button>
-</div>
 
 <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
 
@@ -232,9 +220,7 @@ let fullText = "";
 function connectSocket() {
   socket = new WebSocket(WS_URL);
 
-  socket.onopen = () => {
-    socketReady = true;
-  };
+  socket.onopen = () => socketReady = true;
 
   socket.onclose = () => {
     socketReady = false;
@@ -324,12 +310,23 @@ function loadFile(e) {
    INSTALL MANUAL
 ================================ */
 function installApp() {
-  alert(
-    "Android:\n" +
-    "• Menú ⋮ → Instalar app\n\n" +
-    "iPhone:\n" +
-    "• Compartir → Agregar a pantalla de inicio"
-  );
+  const ua = navigator.userAgent.toLowerCase();
+
+  if (ua.includes("android")) {
+    alert(
+      "Android:\n" +
+      "Menú ⋮ del navegador → Instalar aplicación"
+    );
+  } else if (ua.includes("iphone") || ua.includes("ipad")) {
+    alert(
+      "iOS:\n" +
+      "Compartir → Agregar a pantalla de inicio"
+    );
+  } else {
+    alert(
+      "Usa la opción «Instalar aplicación» del navegador"
+    );
+  }
 }
 
 /* ===============================
