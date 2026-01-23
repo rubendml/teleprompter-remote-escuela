@@ -10,14 +10,16 @@ html, body {
   padding: 0;
   background: black;
   color: white;
-  font-family: Arial, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
   overflow: hidden;
 }
 
+/* Contenedor principal */
 #container {
   position: relative;
 }
 
+/* Texto */
 #text {
   font-size: 64px;
   line-height: 1.4;
@@ -26,6 +28,7 @@ html, body {
   transform-origin: center;
 }
 
+/* Espejo */
 .mirror {
   transform: scaleX(-1);
 }
@@ -37,7 +40,7 @@ html, body {
   left: 0;
   right: 0;
   height: 2px;
-  background: rgba(255,255,255,0.25);
+  background: rgba(255, 255, 255, 0.25);
   pointer-events: none;
   display: none;
 }
@@ -52,53 +55,86 @@ html, body {
 </div>
 
 <script>
-const socket = new WebSocket("wss://teleprompter-ws-5ziy.onrender.com");
+/* ===============================
+   CONFIGURACIÓN
+================================ */
+const WS_URL = "wss://teleprompter-ws-5ziy.onrender.com";
 
+/* ===============================
+   VARIABLES
+================================ */
+const socket = new WebSocket(WS_URL);
 const textEl = document.getElementById("text");
-const guide = document.getElementById("guide");
+const guideEl = document.getElementById("guide");
 
 let scrollSpeed = 0;
-let mirror = true;
-let showGuide = false;
-let y = 0;
-let lastTime = null;
+let yPos = 0;
+let mirrorEnabled = true;
+let guideEnabled = false;
+let lastFrameTime = null;
 
-function animate(time) {
-  if (!lastTime) lastTime = time;
-  const delta = time - lastTime;
-  lastTime = time;
+/* ===============================
+   WEBSOCKET
+================================ */
+socket.onopen = () => {
+  console.log("🟢 Teleprompter conectado al servidor");
+};
 
-  y += scrollSpeed * delta * 0.06;
-  window.scrollTo(0, y);
+socket.onerror = (err) => {
+  console.error("🔴 Error WebSocket:", err);
+};
 
-  requestAnimationFrame(animate);
-}
-requestAnimationFrame(animate);
+socket.onclose = () => {
+  console.warn("⚠️ Conexión WebSocket cerrada");
+};
 
-socket.onmessage = (e) => {
-  const data = JSON.parse(e.data);
+socket.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log("📩 Mensaje recibido:", data);
 
-  if (data.action === "text") {
-    textEl.innerText = data.value;
-    y = 0;
-    window.scrollTo(0, 0);
-  }
+  switch (data.action) {
 
-  if (data.action === "speed") scrollSpeed = data.value;
-  if (data.action === "mirror") {
-    mirror = !mirror;
-    textEl.classList.toggle("mirror", mirror);
-  }
+    case "text":
+      textEl.innerText = data.value || "";
+      yPos = 0;
+      window.scrollTo(0, 0);
+      break;
 
-  if (data.action === "guide") {
-    showGuide = !showGuide;
-    guide.style.display = showGuide ? "block" : "none";
-  }
+    case "speed":
+      scrollSpeed = Number(data.value) || 0;
+      break;
 
-  if (data.action === "font") {
-    textEl.style.fontSize = data.value + "px";
+    case "mirror":
+      mirrorEnabled = !mirrorEnabled;
+      textEl.classList.toggle("mirror", mirrorEnabled);
+      break;
+
+    case "guide":
+      guideEnabled = !guideEnabled;
+      guideEl.style.display = guideEnabled ? "block" : "none";
+      break;
+
+    case "font":
+      textEl.style.fontSize = data.value + "px";
+      break;
   }
 };
+
+/* ===============================
+   SCROLL SUAVE (PRO)
+================================ */
+function animateScroll(timestamp) {
+  if (!lastFrameTime) lastFrameTime = timestamp;
+  const delta = timestamp - lastFrameTime;
+  lastFrameTime = timestamp;
+
+  yPos += scrollSpeed * delta * 0.06;
+  window.scrollTo(0, yPos);
+
+  requestAnimationFrame(animateScroll);
+}
+
+requestAnimationFrame(animateScroll);
 </script>
 
 </body>

@@ -32,6 +32,13 @@ button {
 .blue { background: #3498db; }
 .orange { background: #f39c12; }
 .purple { background: #9b59b6; }
+.red { background: #e74c3c; }
+
+#status {
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
 </style>
 </head>
 
@@ -39,7 +46,8 @@ button {
 
 <h2>🎮 Control Teleprompter</h2>
 
-<!-- CARGA DE ARCHIVOS -->
+<div id="status">🔄 Conectando al servidor…</div>
+
 <input type="file" accept=".txt,.md,.docx" onchange="loadFile(event)">
 
 <textarea id="script" rows="8" placeholder="Escribe o pega el texto aquí…"></textarea>
@@ -51,16 +59,44 @@ button {
 <button class="purple" onclick="changeSpeed(0.5)">➕ Velocidad</button>
 <button class="purple" onclick="changeSpeed(-0.5)">➖ Velocidad</button>
 
-<!-- LIBRERÍA DOCX -->
 <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
 
 <script>
-const socket = new WebSocket("wss://teleprompter-ws-5ziy.onrender.com");
-
+let socket;
 let speed = 0;
+const statusEl = document.getElementById("status");
+
+function connectSocket() {
+  socket = new WebSocket("wss://teleprompter-ws-5ziy.onrender.com");
+
+  socket.onopen = () => {
+    statusEl.innerText = "🟢 Conectado al teleprompter";
+  };
+
+  socket.onerror = () => {
+    statusEl.innerText = "🔴 Error de conexión";
+  };
+
+  socket.onclose = () => {
+    statusEl.innerText = "⚠️ Conexión perdida, reconectando…";
+    setTimeout(connectSocket, 2000);
+  };
+}
+
+connectSocket();
 
 function send(action, value = null) {
+  if (!socket || socket.readyState !== WebSocket.OPEN) {
+    statusEl.innerText = "⏳ Esperando conexión…";
+    return;
+  }
+
+  statusEl.innerText = "📤 Enviando información…";
   socket.send(JSON.stringify({ action, value }));
+
+  setTimeout(() => {
+    statusEl.innerText = "🟢 Enviado correctamente";
+  }, 500);
 }
 
 function sendText() {
@@ -87,7 +123,6 @@ function loadFile(event) {
 
   const ext = file.name.split(".").pop().toLowerCase();
 
-  // TXT o MD
   if (ext === "txt" || ext === "md") {
     const reader = new FileReader();
     reader.onload = e => {
@@ -96,7 +131,6 @@ function loadFile(event) {
     reader.readAsText(file);
   }
 
-  // DOCX
   if (ext === "docx") {
     const reader = new FileReader();
     reader.onload = e => {
@@ -104,10 +138,7 @@ function loadFile(event) {
         .then(result => {
           document.getElementById("script").value = result.value;
         })
-        .catch(err => {
-          alert("Error leyendo el archivo DOCX");
-          console.error(err);
-        });
+        .catch(() => alert("Error leyendo DOCX"));
     };
     reader.readAsArrayBuffer(file);
   }
