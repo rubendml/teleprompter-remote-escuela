@@ -9,12 +9,12 @@ html, body {
   margin: 0;
   padding: 0;
   background: black;
-  color: white;
+  color: #f5f5f5;
   font-family: Arial, Helvetica, sans-serif;
   overflow: hidden;
 }
 
-/* Contenedor principal */
+/* Contenedor */
 #container {
   position: relative;
 }
@@ -22,10 +22,11 @@ html, body {
 /* Texto */
 #text {
   font-size: 64px;
-  line-height: 1.4;
-  padding: 12vh 10vw;
+  line-height: 1.5;
+  padding: 14vh 12vw;
   white-space: pre-wrap;
   transform-origin: center;
+  transition: all 0.4s ease;
 }
 
 /* Espejo */
@@ -40,9 +41,19 @@ html, body {
   left: 0;
   right: 0;
   height: 2px;
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255,255,255,0.25);
   pointer-events: none;
   display: none;
+}
+
+/* Modo cámara */
+.camera #text {
+  color: #f1f1e6;
+  padding: 16vh 15vw;
+}
+
+.camera #guide {
+  display: block;
 }
 </style>
 </head>
@@ -55,45 +66,26 @@ html, body {
 </div>
 
 <script>
-/* ===============================
-   CONFIGURACIÓN
-================================ */
 const WS_URL = "wss://teleprompter-ws-5ziy.onrender.com";
 
-/* ===============================
-   VARIABLES
-================================ */
 const socket = new WebSocket(WS_URL);
 const textEl = document.getElementById("text");
 const guideEl = document.getElementById("guide");
+const body = document.body;
 
 let scrollSpeed = 0;
 let yPos = 0;
 let mirrorEnabled = true;
-let guideEnabled = false;
-let lastFrameTime = null;
+let cameraMode = false;
+let lastTime = null;
 
-/* ===============================
-   WEBSOCKET
-================================ */
-socket.onopen = () => {
-  console.log("🟢 Teleprompter conectado al servidor");
-};
+/* WebSocket */
+socket.onopen = () => console.log("🟢 Teleprompter conectado");
 
-socket.onerror = (err) => {
-  console.error("🔴 Error WebSocket:", err);
-};
-
-socket.onclose = () => {
-  console.warn("⚠️ Conexión WebSocket cerrada");
-};
-
-socket.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  console.log("📩 Mensaje recibido:", data);
+socket.onmessage = (e) => {
+  const data = JSON.parse(e.data);
 
   switch (data.action) {
-
     case "text":
       textEl.innerText = data.value || "";
       yPos = 0;
@@ -109,32 +101,27 @@ socket.onmessage = (event) => {
       textEl.classList.toggle("mirror", mirrorEnabled);
       break;
 
-    case "guide":
-      guideEnabled = !guideEnabled;
-      guideEl.style.display = guideEnabled ? "block" : "none";
-      break;
-
-    case "font":
-      textEl.style.fontSize = data.value + "px";
+    case "camera":
+      cameraMode = !cameraMode;
+      body.classList.toggle("camera", cameraMode);
+      mirrorEnabled = cameraMode;
+      textEl.classList.toggle("mirror", mirrorEnabled);
       break;
   }
 };
 
-/* ===============================
-   SCROLL SUAVE (PRO)
-================================ */
-function animateScroll(timestamp) {
-  if (!lastFrameTime) lastFrameTime = timestamp;
-  const delta = timestamp - lastFrameTime;
-  lastFrameTime = timestamp;
+/* Scroll ultra suave */
+function animate(t) {
+  if (!lastTime) lastTime = t;
+  const delta = t - lastTime;
+  lastTime = t;
 
   yPos += scrollSpeed * delta * 0.06;
   window.scrollTo(0, yPos);
 
-  requestAnimationFrame(animateScroll);
+  requestAnimationFrame(animate);
 }
-
-requestAnimationFrame(animateScroll);
+requestAnimationFrame(animate);
 </script>
 
 </body>

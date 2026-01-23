@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Control Teleprompter Pro</title>
+<title>Control Teleprompter</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -11,6 +11,26 @@ body {
   color: white;
   font-family: Arial, sans-serif;
   padding: 15px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Logo */
+#logo {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+#logo img {
+  max-width: 180px;
+  width: 60%;
+  height: auto;
+}
+
+/* Contenido */
+#content {
+  flex: 1;
 }
 
 textarea, input[type=file] {
@@ -32,83 +52,59 @@ button {
 .blue { background: #3498db; }
 .orange { background: #f39c12; }
 .purple { background: #9b59b6; }
-.red { background: #e74c3c; }
 
-#status {
+/* Pie */
+footer {
   text-align: center;
-  margin-bottom: 10px;
-  font-size: 14px;
+  font-size: 13px;
+  color: #aaa;
+  margin-top: 10px;
 }
 </style>
 </head>
 
 <body>
 
-<h2>🎮 Control Teleprompter</h2>
+<div id="logo">
+  <img src="logo-escuela.svg" alt="Logo">
+</div>
 
-<div id="status">🔄 Conectando al servidor…</div>
+<div id="content">
 
 <input type="file" accept=".txt,.md,.docx" onchange="loadFile(event)">
 
-<textarea id="script" rows="8" placeholder="Escribe o pega el texto aquí…"></textarea>
+<textarea id="script" rows="7" placeholder="Texto del teleprompter…"></textarea>
 
 <button class="green" onclick="sendText()">📤 Enviar texto</button>
-<button class="blue" onclick="toggleMirror()">🔁 Espejo</button>
-<button class="orange" onclick="toggleGuide()">🎯 Línea guía</button>
+<button class="orange" onclick="toggleCamera()">🎥 Modo Cámara</button>
 
 <button class="purple" onclick="changeSpeed(0.5)">➕ Velocidad</button>
 <button class="purple" onclick="changeSpeed(-0.5)">➖ Velocidad</button>
 
+</div>
+
+<footer>
+  Creaciones Manotas
+</footer>
+
 <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
 
 <script>
-let socket;
+const socket = new WebSocket("wss://teleprompter-ws-5ziy.onrender.com");
 let speed = 0;
-const statusEl = document.getElementById("status");
-
-function connectSocket() {
-  socket = new WebSocket("wss://teleprompter-ws-5ziy.onrender.com");
-
-  socket.onopen = () => {
-    statusEl.innerText = "🟢 Conectado al teleprompter";
-  };
-
-  socket.onerror = () => {
-    statusEl.innerText = "🔴 Error de conexión";
-  };
-
-  socket.onclose = () => {
-    statusEl.innerText = "⚠️ Conexión perdida, reconectando…";
-    setTimeout(connectSocket, 2000);
-  };
-}
-
-connectSocket();
 
 function send(action, value = null) {
-  if (!socket || socket.readyState !== WebSocket.OPEN) {
-    statusEl.innerText = "⏳ Esperando conexión…";
-    return;
+  if (socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ action, value }));
   }
-
-  statusEl.innerText = "📤 Enviando información…";
-  socket.send(JSON.stringify({ action, value }));
-
-  setTimeout(() => {
-    statusEl.innerText = "🟢 Enviado correctamente";
-  }, 500);
 }
 
 function sendText() {
   send("text", document.getElementById("script").value);
 }
 
-function toggleMirror() {
-  send("mirror");
-}
-
-function toggleGuide() {
-  send("guide");
+function toggleCamera() {
+  send("camera");
 }
 
 function changeSpeed(delta) {
@@ -116,31 +112,25 @@ function changeSpeed(delta) {
   send("speed", speed);
 }
 
-/* CARGA DE ARCHIVOS */
 function loadFile(event) {
   const file = event.target.files[0];
   if (!file) return;
 
   const ext = file.name.split(".").pop().toLowerCase();
 
-  if (ext === "txt" || ext === "md") {
-    const reader = new FileReader();
-    reader.onload = e => {
-      document.getElementById("script").value = e.target.result;
-    };
-    reader.readAsText(file);
-  }
-
   if (ext === "docx") {
     const reader = new FileReader();
     reader.onload = e => {
       mammoth.extractRawText({ arrayBuffer: e.target.result })
-        .then(result => {
-          document.getElementById("script").value = result.value;
-        })
-        .catch(() => alert("Error leyendo DOCX"));
+        .then(res => document.getElementById("script").value = res.value);
     };
     reader.readAsArrayBuffer(file);
+  }
+
+  if (ext === "txt" || ext === "md") {
+    const reader = new FileReader();
+    reader.onload = e => document.getElementById("script").value = e.target.result;
+    reader.readAsText(file);
   }
 }
 </script>
