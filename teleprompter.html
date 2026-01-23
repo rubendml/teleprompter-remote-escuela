@@ -24,7 +24,6 @@ html, body {
   padding: 14vh 12vw;
   white-space: pre-wrap;
   transform-origin: center;
-  transition: all 0.4s ease;
 }
 
 .mirror {
@@ -39,12 +38,6 @@ html, body {
   height: 2px;
   background: rgba(255,255,255,0.25);
   pointer-events: none;
-  display: none;
-}
-
-.camera #text {
-  color: #f1f1e6;
-  padding: 16vh 15vw;
 }
 
 .camera #guide {
@@ -66,47 +59,37 @@ const PIN = "1234";
 
 const socket = new WebSocket(WS_URL);
 const textEl = document.getElementById("text");
-const guideEl = document.getElementById("guide");
-const body = document.body;
 
 let scrollSpeed = 0;
 let yPos = 0;
-let mirrorEnabled = true;
-let cameraMode = false;
 let lastTime = null;
+let totalHeight = 0;
 
-/* WebSocket */
-socket.onmessage = (e) => {
+/* Recepción */
+socket.onmessage = e => {
   const data = JSON.parse(e.data);
+  if (data.pin !== PIN) return;
 
-  if (data.pin !== PIN) return; // 🔐 Seguridad
+  if (data.action === "text") {
+    textEl.innerText = data.value || "";
+    yPos = 0;
+    window.scrollTo(0, 0);
+    setTimeout(() => {
+      totalHeight = document.body.scrollHeight;
+    }, 100);
+  }
 
-  switch (data.action) {
-    case "text":
-      textEl.innerText = data.value || "";
-      yPos = 0;
-      window.scrollTo(0, 0);
-      break;
+  if (data.action === "speed") {
+    scrollSpeed = Number(data.value) || 0;
+  }
 
-    case "speed":
-      scrollSpeed = Number(data.value) || 0;
-      break;
-
-    case "mirror":
-      mirrorEnabled = !mirrorEnabled;
-      textEl.classList.toggle("mirror", mirrorEnabled);
-      break;
-
-    case "camera":
-      cameraMode = !cameraMode;
-      body.classList.toggle("camera", cameraMode);
-      mirrorEnabled = cameraMode;
-      textEl.classList.toggle("mirror", mirrorEnabled);
-      break;
+  if (data.action === "camera") {
+    document.body.classList.toggle("camera");
+    textEl.classList.toggle("mirror");
   }
 };
 
-/* Scroll suave */
+/* Scroll + estado */
 function animate(t) {
   if (!lastTime) lastTime = t;
   const delta = t - lastTime;
@@ -115,8 +98,18 @@ function animate(t) {
   yPos += scrollSpeed * delta * 0.06;
   window.scrollTo(0, yPos);
 
+  // Enviar estado al control
+  socket.send(JSON.stringify({
+    action: "status",
+    pin: PIN,
+    y: yPos,
+    total: totalHeight,
+    speed: scrollSpeed
+  }));
+
   requestAnimationFrame(animate);
 }
+
 requestAnimationFrame(animate);
 </script>
 

@@ -16,28 +16,23 @@ body {
   min-height: 100vh;
 }
 
-/* Header con logo a la derecha */
 header {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 10px;
 }
 
 header img {
   max-width: 160px;
   width: 50%;
-  height: auto;
 }
 
-/* Contenido */
 #content {
   flex: 1;
 }
 
-textarea, input[type=file], input[type=password] {
+textarea, input, progress {
   width: 100%;
   margin-bottom: 10px;
-  font-size: 16px;
 }
 
 button {
@@ -52,15 +47,25 @@ button {
 .green { background: #1abc9c; }
 .orange { background: #f39c12; }
 .purple { background: #9b59b6; }
-.blue { background: #3498db; }
 
-/* Pie */
 footer {
   text-align: center;
   font-size: 16px;
   font-weight: bold;
-  color: #ffd700; /* amarillo */
-  margin-top: 10px;
+  color: #ffd700;
+}
+
+/* Presentador */
+#presenter {
+  background: #1a1a1a;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.small {
+  font-size: 14px;
+  color: #ccc;
 }
 </style>
 </head>
@@ -68,27 +73,40 @@ footer {
 <body>
 
 <header>
-  <img src="logo-escuela.svg" alt="Logo">
+  <img src="logo-escuela.svg">
 </header>
 
 <div id="content">
 
-<input type="password" id="pin" placeholder="PIN de control" value="1234">
+<input type="password" id="pin" value="1234">
+
+<div id="presenter">
+  <div><strong>📍 Actual</strong></div>
+  <div id="current" class="small">---</div>
+
+  <div style="margin-top:6px;"><strong>⏭ Siguiente</strong></div>
+  <div id="next" class="small">---</div>
+
+  <div style="margin-top:6px;">
+    ⏱ Tiempo restante: <span id="time">--</span><br>
+    🎚 Velocidad: <span id="spd">0</span>
+  </div>
+
+  <progress id="progress" value="0" max="100"></progress>
+</div>
 
 <input type="file" accept=".txt,.md,.docx" onchange="loadFile(event)">
-
-<textarea id="script" rows="6" placeholder="Texto del teleprompter…"></textarea>
+<textarea id="script" rows="5"></textarea>
 
 <button class="green" onclick="sendText()">📤 Enviar texto</button>
 <button class="orange" onclick="toggleCamera()">🎥 Modo Cámara</button>
-
 <button class="purple" onclick="changeSpeed(0.5)">➕ Velocidad</button>
 <button class="purple" onclick="changeSpeed(-0.5)">➖ Velocidad</button>
 
 </div>
 
 <footer>
-  Creaciones Manotas
+Creaciones Manotas
 </footer>
 
 <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
@@ -96,16 +114,42 @@ footer {
 <script>
 const socket = new WebSocket("wss://teleprompter-ws-5ziy.onrender.com");
 let speed = 0;
+let fullText = "";
+
+socket.onmessage = e => {
+  const data = JSON.parse(e.data);
+  if (data.action !== "status") return;
+  if (data.pin !== document.getElementById("pin").value) return;
+
+  const progress = Math.min(100, (data.y / data.total) * 100);
+  document.getElementById("progress").value = progress;
+  document.getElementById("spd").innerText = data.speed;
+
+  const remaining = (data.total - data.y) / (data.speed * 30 || 1);
+  document.getElementById("time").innerText =
+    Math.max(0, Math.round(remaining)) + " s";
+
+  updateBlocks(progress);
+};
+
+function updateBlocks(progress) {
+  const parts = fullText.split("\n\n");
+  const index = Math.floor((progress / 100) * parts.length);
+  document.getElementById("current").innerText = parts[index] || "";
+  document.getElementById("next").innerText = parts[index + 1] || "";
+}
 
 function send(action, value = null) {
-  const pin = document.getElementById("pin").value;
-  if (socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ action, value, pin }));
-  }
+  socket.send(JSON.stringify({
+    action,
+    value,
+    pin: document.getElementById("pin").value
+  }));
 }
 
 function sendText() {
-  send("text", document.getElementById("script").value);
+  fullText = document.getElementById("script").value;
+  send("text", fullText);
 }
 
 function toggleCamera() {
@@ -117,26 +161,22 @@ function changeSpeed(delta) {
   send("speed", speed);
 }
 
-function loadFile(event) {
-  const file = event.target.files[0];
+function loadFile(e) {
+  const file = e.target.files[0];
   if (!file) return;
-
   const ext = file.name.split(".").pop().toLowerCase();
 
-  if (ext === "docx") {
-    const reader = new FileReader();
-    reader.onload = e => {
-      mammoth.extractRawText({ arrayBuffer: e.target.result })
+  const reader = new FileReader();
+  reader.onload = ev => {
+    if (ext === "docx") {
+      mammoth.extractRawText({ arrayBuffer: ev.target.result })
         .then(res => document.getElementById("script").value = res.value);
-    };
-    reader.readAsArrayBuffer(file);
-  }
+    } else {
+      document.getElementById("script").value = ev.target.result;
+    }
+  };
 
-  if (ext === "txt" || ext === "md") {
-    const reader = new FileReader();
-    reader.onload = e => document.getElementById("script").value = e.target.result;
-    reader.readAsText(file);
-  }
+  ext === "docx" ? reader.readAsArrayBuffer(file) : reader.readAsText(file);
 }
 </script>
 
