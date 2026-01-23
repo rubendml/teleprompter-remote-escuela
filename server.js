@@ -13,4 +13,4 @@ wss.on("connection", (ws) => {
   });
 });
 
-console.log("🟢 WebSocket activo en puerto", PORT);
+console.log("🟢 WebSocket activo");

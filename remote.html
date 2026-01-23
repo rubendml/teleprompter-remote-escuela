@@ -2,66 +2,116 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Mando Teleprompter</title>
+<title>Control Teleprompter</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body {
   background: #111;
   color: white;
   font-family: Arial, sans-serif;
-  text-align: center;
-  padding: 20px;
+  padding: 15px;
 }
+
+textarea, select {
+  width: 100%;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
 button {
   width: 100%;
-  padding: 18px;
-  margin: 10px 0;
-  font-size: 20px;
+  padding: 14px;
+  margin-bottom: 8px;
+  font-size: 18px;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
 }
+
 .play { background: #2ecc71; }
 .pause { background: #e74c3c; }
-.speed { background: #3498db; }
-.move { background: #9b59b6; }
-.font { background: #f39c12; }
+.blue { background: #3498db; }
+.purple { background: #9b59b6; }
+.orange { background: #f39c12; }
+.green { background: #1abc9c; }
 </style>
 </head>
+
 <body>
 
 <h2>🎮 Control Teleprompter</h2>
 
+<select id="savedTexts" onchange="loadSaved()">
+  <option value="">📂 Textos guardados</option>
+</select>
+
+<textarea id="script" rows="8" placeholder="Escribe o pega el texto aquí..."></textarea>
+
+<button class="green" onclick="sendText()">📤 Enviar texto</button>
+<button class="blue" onclick="saveText()">💾 Guardar texto</button>
+<button class="orange" onclick="toggleMirror()">🔁 Espejo ON / OFF</button>
+
 <button class="play" onclick="send('play')">▶ Play</button>
 <button class="pause" onclick="send('pause')">⏸ Pausa</button>
 
-<button class="speed" onclick="setSpeed(1)">Velocidad +</button>
-<button class="speed" onclick="setSpeed(-1)">Velocidad -</button>
+<button class="purple" onclick="changeSpeed(1)">➕ Velocidad</button>
+<button class="purple" onclick="changeSpeed(-1)">➖ Velocidad</button>
 
-<button class="move" onclick="send('up')">⬆ Subir</button>
-<button class="move" onclick="send('down')">⬇ Bajar</button>
-
-<button class="font" onclick="setFont(8)">Letra +</button>
-<button class="font" onclick="setFont(-8)">Letra -</button>
+<button class="blue" onclick="send('up')">⬆ Subir</button>
+<button class="blue" onclick="send('down')">⬇ Bajar</button>
 
 <script>
 const socket = new WebSocket("wss://teleprompter-ws-5ziy.onrender.com");
 
 let speed = 1;
-let font = 64;
+let texts = JSON.parse(localStorage.getItem("teleprompterTexts")) || [];
+
+const select = document.getElementById("savedTexts");
+const textarea = document.getElementById("script");
+
+function refreshList() {
+  select.innerHTML = '<option value="">📂 Textos guardados</option>';
+  texts.forEach((t, i) => {
+    const option = document.createElement("option");
+    option.value = i;
+    option.textContent = t.title;
+    select.appendChild(option);
+  });
+}
 
 function send(action, value = null) {
   socket.send(JSON.stringify({ action, value }));
 }
 
-function setSpeed(delta) {
-  speed += delta;
+function sendText() {
+  send("text", textarea.value);
+}
+
+function toggleMirror() {
+  send("mirror");
+}
+
+function changeSpeed(delta) {
+  speed = Math.max(0, speed + delta);
   send("speed", speed);
 }
 
-function setFont(delta) {
-  font += delta;
-  send("font", font);
+function saveText() {
+  const title = prompt("Nombre del texto:");
+  if (!title) return;
+
+  texts.push({ title, content: textarea.value });
+  localStorage.setItem("teleprompterTexts", JSON.stringify(texts));
+  refreshList();
 }
+
+function loadSaved() {
+  const index = select.value;
+  if (index === "") return;
+  textarea.value = texts[index].content;
+}
+
+refreshList();
 </script>
 
 </body>
