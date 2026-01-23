@@ -2,80 +2,101 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Teleprompter</title>
+<title>Teleprompter Pro</title>
 
 <style>
-body {
+html, body {
   margin: 0;
+  padding: 0;
   background: black;
   color: white;
   font-family: Arial, sans-serif;
   overflow: hidden;
 }
 
+#container {
+  position: relative;
+}
+
 #text {
   font-size: 64px;
   line-height: 1.4;
-  padding: 10vh 8vw;
+  padding: 12vh 10vw;
   white-space: pre-wrap;
-  transition: transform 0.3s;
+  transform-origin: center;
 }
 
 .mirror {
   transform: scaleX(-1);
+}
+
+/* Línea guía */
+#guide {
+  position: fixed;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(255,255,255,0.25);
+  pointer-events: none;
+  display: none;
 }
 </style>
 </head>
 
 <body>
 
-<div id="text" class="mirror">
-Esperando texto...
+<div id="container">
+  <div id="text" class="mirror">Esperando texto…</div>
+  <div id="guide"></div>
 </div>
 
 <script>
 const socket = new WebSocket("wss://teleprompter-ws-5ziy.onrender.com");
 
-const text = document.getElementById("text");
-let speed = 0;
-let scrolling = false;
+const textEl = document.getElementById("text");
+const guide = document.getElementById("guide");
+
+let scrollSpeed = 0;
 let mirror = true;
-let interval = null;
+let showGuide = false;
+let y = 0;
+let lastTime = null;
 
-function startScroll() {
-  if (interval) clearInterval(interval);
-  scrolling = true;
-  interval = setInterval(() => {
-    window.scrollBy(0, speed);
-  }, 30);
+function animate(time) {
+  if (!lastTime) lastTime = time;
+  const delta = time - lastTime;
+  lastTime = time;
+
+  y += scrollSpeed * delta * 0.06;
+  window.scrollTo(0, y);
+
+  requestAnimationFrame(animate);
 }
+requestAnimationFrame(animate);
 
-function stopScroll() {
-  scrolling = false;
-  if (interval) clearInterval(interval);
-}
-
-socket.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-
-  if (data.action === "play") startScroll();
-  if (data.action === "pause") stopScroll();
-
-  if (data.action === "speed") speed = data.value;
-
-  if (data.action === "up") window.scrollBy(0, -100);
-  if (data.action === "down") window.scrollBy(0, 100);
-
-  if (data.action === "font") text.style.fontSize = data.value + "px";
+socket.onmessage = (e) => {
+  const data = JSON.parse(e.data);
 
   if (data.action === "text") {
-    text.innerText = data.value;
+    textEl.innerText = data.value;
+    y = 0;
     window.scrollTo(0, 0);
   }
 
+  if (data.action === "speed") scrollSpeed = data.value;
   if (data.action === "mirror") {
     mirror = !mirror;
-    text.classList.toggle("mirror", mirror);
+    textEl.classList.toggle("mirror", mirror);
+  }
+
+  if (data.action === "guide") {
+    showGuide = !showGuide;
+    guide.style.display = showGuide ? "block" : "none";
+  }
+
+  if (data.action === "font") {
+    textEl.style.fontSize = data.value + "px";
   }
 };
 </script>
