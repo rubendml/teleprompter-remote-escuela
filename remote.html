@@ -6,66 +6,136 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+:root {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --accent: #22c55e;
+  --warn: #f59e0b;
+  --info: #8b5cf6;
+  --brand: #ffd700;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
-  background: #111;
-  color: white;
-  font-family: Arial, sans-serif;
-  padding: 15px;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
+/* HEADER */
 header {
   display: flex;
   justify-content: flex-end;
+  padding: 12px 16px;
 }
 
 header img {
-  max-width: 160px;
-  width: 50%;
+  max-width: 140px;
 }
 
-#content {
+/* CONTENIDO */
+main {
   flex: 1;
+  padding: 16px;
+  display: grid;
+  gap: 14px;
 }
 
-textarea, input, progress {
+/* CARD */
+.card {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 10px 20px rgba(0,0,0,.25);
+}
+
+.card h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* INPUTS */
+textarea, input {
   width: 100%;
-  margin-bottom: 10px;
+  background: #020617;
+  color: var(--text);
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 15px;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+/* BOTONES */
+.buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
 }
 
 button {
-  width: 100%;
-  padding: 14px;
-  margin-bottom: 8px;
-  font-size: 18px;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .1s ease, opacity .2s;
 }
 
-.green { background: #1abc9c; }
-.orange { background: #f39c12; }
-.purple { background: #9b59b6; }
+button:active {
+  transform: scale(.97);
+}
 
+.send { background: var(--accent); color: #022c22; }
+.camera { background: var(--warn); color: #3a2500; }
+.plus { background: var(--info); }
+.minus { background: #475569; }
+
+/* PRESENTADOR */
+.presenter small {
+  color: var(--muted);
+  display: block;
+}
+
+.presenter progress {
+  width: 100%;
+  height: 10px;
+  margin-top: 8px;
+}
+
+/* PIN */
+.pin-box {
+  margin: 0 16px 8px;
+}
+
+.pin-box small {
+  color: var(--muted);
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* FOOTER */
 footer {
   text-align: center;
-  font-size: 16px;
-  font-weight: bold;
-  color: #ffd700;
-}
-
-/* Presentador */
-#presenter {
-  background: #1a1a1a;
   padding: 10px;
-  border-radius: 8px;
-  margin-bottom: 10px;
-}
-
-.small {
-  font-size: 14px;
-  color: #ccc;
+  font-size: 17px;
+  font-weight: bold;
+  color: var(--brand);
 }
 </style>
 </head>
@@ -73,40 +143,49 @@ footer {
 <body>
 
 <header>
-  <img src="logo-escuela.svg">
+  <img src="logo-escuela.svg" alt="Logo">
 </header>
 
-<div id="content">
+<main>
 
-<input type="password" id="pin" value="1234">
+<div class="card presenter">
+  <h3>🎤 Vista del presentador</h3>
+  <small>Actual</small>
+  <div id="current">---</div>
 
-<div id="presenter">
-  <div><strong>📍 Actual</strong></div>
-  <div id="current" class="small">---</div>
+  <small style="margin-top:6px">Siguiente</small>
+  <div id="next">---</div>
 
-  <div style="margin-top:6px;"><strong>⏭ Siguiente</strong></div>
-  <div id="next" class="small">---</div>
-
-  <div style="margin-top:6px;">
-    ⏱ Tiempo restante: <span id="time">--</span><br>
-    🎚 Velocidad: <span id="spd">0</span>
-  </div>
+  <small style="margin-top:6px">
+    ⏱ <span id="time">--</span> · 🎚 <span id="spd">0</span>
+  </small>
 
   <progress id="progress" value="0" max="100"></progress>
 </div>
 
-<input type="file" accept=".txt,.md,.docx" onchange="loadFile(event)">
-<textarea id="script" rows="5"></textarea>
+<div class="card">
+  <h3>📄 Texto</h3>
+  <input type="file" accept=".txt,.md,.docx" onchange="loadFile(event)">
+  <textarea id="script"></textarea>
+</div>
 
-<button class="green" onclick="sendText()">📤 Enviar texto</button>
-<button class="orange" onclick="toggleCamera()">🎥 Modo Cámara</button>
-<button class="purple" onclick="changeSpeed(0.5)">➕ Velocidad</button>
-<button class="purple" onclick="changeSpeed(-0.5)">➖ Velocidad</button>
+<div class="card buttons">
+  <button class="send" onclick="sendText()">📤 Enviar</button>
+  <button class="camera" onclick="toggleCamera()">🎥 Cámara</button>
+  <button class="plus" onclick="changeSpeed(0.5)">➕ Vel</button>
+  <button class="minus" onclick="changeSpeed(-0.5)">➖ Vel</button>
+</div>
 
+</main>
+
+<!-- PIN ABAJO -->
+<div class="pin-box">
+  <small>🔐 PIN de control</small>
+  <input type="password" id="pin" value="1234">
 </div>
 
 <footer>
-Creaciones Manotas
+  Creaciones Manotas
 </footer>
 
 <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
@@ -121,34 +200,32 @@ socket.onmessage = e => {
   if (data.action !== "status") return;
   if (data.pin !== document.getElementById("pin").value) return;
 
-  const progress = Math.min(100, (data.y / data.total) * 100);
-  document.getElementById("progress").value = progress;
-  document.getElementById("spd").innerText = data.speed;
+  const p = Math.min(100, (data.y / data.total) * 100);
+  progress.value = p;
+  spd.innerText = data.speed;
+  time.innerText =
+    Math.max(0, Math.round((data.total - data.y) / (data.speed * 30 || 1))) + " s";
 
-  const remaining = (data.total - data.y) / (data.speed * 30 || 1);
-  document.getElementById("time").innerText =
-    Math.max(0, Math.round(remaining)) + " s";
-
-  updateBlocks(progress);
+  updateBlocks(p);
 };
 
-function updateBlocks(progress) {
+function updateBlocks(p) {
   const parts = fullText.split("\n\n");
-  const index = Math.floor((progress / 100) * parts.length);
-  document.getElementById("current").innerText = parts[index] || "";
-  document.getElementById("next").innerText = parts[index + 1] || "";
+  const i = Math.floor((p / 100) * parts.length);
+  current.innerText = parts[i] || "";
+  next.innerText = parts[i + 1] || "";
 }
 
 function send(action, value = null) {
   socket.send(JSON.stringify({
     action,
     value,
-    pin: document.getElementById("pin").value
+    pin: pin.value
   }));
 }
 
 function sendText() {
-  fullText = document.getElementById("script").value;
+  fullText = script.value;
   send("text", fullText);
 }
 
@@ -156,27 +233,27 @@ function toggleCamera() {
   send("camera");
 }
 
-function changeSpeed(delta) {
-  speed = Math.max(0, speed + delta);
+function changeSpeed(d) {
+  speed = Math.max(0, speed + d);
   send("speed", speed);
 }
 
 function loadFile(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const ext = file.name.split(".").pop().toLowerCase();
+  const f = e.target.files[0];
+  if (!f) return;
+  const ext = f.name.split(".").pop().toLowerCase();
+  const r = new FileReader();
 
-  const reader = new FileReader();
-  reader.onload = ev => {
+  r.onload = ev => {
     if (ext === "docx") {
       mammoth.extractRawText({ arrayBuffer: ev.target.result })
-        .then(res => document.getElementById("script").value = res.value);
+        .then(res => script.value = res.value);
     } else {
-      document.getElementById("script").value = ev.target.result;
+      script.value = ev.target.result;
     }
   };
 
-  ext === "docx" ? reader.readAsArrayBuffer(file) : reader.readAsText(file);
+  ext === "docx" ? r.readAsArrayBuffer(f) : r.readAsText(f);
 }
 </script>
 
