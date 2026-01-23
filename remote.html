@@ -7,8 +7,8 @@
 
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#0f172a">
+<link rel="apple-touch-icon" href="icon-192.png">
 
 <style>
 :root {
@@ -97,10 +97,7 @@ button {
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: transform .1s ease, opacity .2s;
 }
-
-button:active { transform: scale(.97); }
 
 .send   { background: var(--accent); color: #022c22; }
 .camera { background: var(--warn);   color: #3a2500; }
@@ -139,24 +136,23 @@ footer {
   color: var(--brand);
 }
 
-/* INSTALL BANNER */
-#installBanner {
+/* INSTALL BAR */
+#installBar {
   position: fixed;
   bottom: 70px;
   left: 50%;
   transform: translateX(-50%);
   background: #1e293b;
-  color: #e5e7eb;
   padding: 10px 14px;
   border-radius: 12px;
-  display: none;
-  align-items: center;
+  display: flex;
   gap: 10px;
+  align-items: center;
   box-shadow: 0 10px 20px rgba(0,0,0,.4);
   z-index: 1000;
 }
 
-#installBanner button {
+#installBar button {
   background: #22c55e;
   border: none;
   border-radius: 8px;
@@ -175,10 +171,8 @@ footer {
 
 <main>
 
-<!-- VISTA PRESENTADOR -->
 <div class="card presenter">
   <h3>🎤 Vista del presentador</h3>
-
   <small>Actual</small>
   <div id="current">---</div>
 
@@ -192,14 +186,12 @@ footer {
   <progress id="progress" value="0" max="100"></progress>
 </div>
 
-<!-- TEXTO -->
 <div class="card">
   <h3>📄 Texto</h3>
   <input type="file" accept=".txt,.md,.docx" onchange="loadFile(event)">
-  <textarea id="script" placeholder="Pega o carga el texto…"></textarea>
+  <textarea id="script"></textarea>
 </div>
 
-<!-- CONTROLES -->
 <div class="card buttons">
   <button class="send" onclick="sendText()">📤 Enviar</button>
   <button class="camera" onclick="toggleCamera()">🎥 Cámara</button>
@@ -209,19 +201,18 @@ footer {
 
 </main>
 
-<!-- PIN ABAJO -->
 <div class="pin-box">
   <small>🔐 PIN de control</small>
   <input type="password" id="pin" value="1234">
 </div>
 
 <footer>
-  Creaciones Manotas - Ver. 1.6
+  Creaciones Manotas
 </footer>
 
-<!-- INSTALL BANNER -->
-<div id="installBanner" style="display:flex;">
-  <span>📲 ¿Quieres instalar la app?</span>
+<!-- INSTALL -->
+<div id="installBar">
+  <span>📲 ¿Instalar como app?</span>
   <button onclick="installApp()">Instalar</button>
 </div>
 
@@ -229,7 +220,7 @@ footer {
 
 <script>
 /* ===============================
-   WEBSOCKET ROBUSTO (PWA SAFE)
+   WEBSOCKET ROBUSTO
 ================================ */
 const WS_URL = "wss://teleprompter-ws-5ziy.onrender.com";
 
@@ -243,17 +234,11 @@ function connectSocket() {
 
   socket.onopen = () => {
     socketReady = true;
-    console.log("🟢 Control conectado");
   };
 
   socket.onclose = () => {
     socketReady = false;
-    console.warn("⚠️ Control desconectado. Reintentando…");
     setTimeout(connectSocket, 2000);
-  };
-
-  socket.onerror = () => {
-    socketReady = false;
   };
 
   socket.onmessage = e => {
@@ -275,7 +260,7 @@ function connectSocket() {
 connectSocket();
 
 /* ===============================
-   BLOQUES DE TEXTO
+   BLOQUES
 ================================ */
 function updateBlocks(p) {
   const parts = fullText.split("\n\n");
@@ -285,11 +270,11 @@ function updateBlocks(p) {
 }
 
 /* ===============================
-   ENVÍO PROTEGIDO
+   ENVÍO
 ================================ */
 function send(action, value = null) {
   if (!socketReady) {
-    alert("Conectando… intenta de nuevo en un segundo");
+    alert("Conectando… intenta de nuevo");
     return;
   }
 
@@ -315,7 +300,7 @@ function changeSpeed(d) {
 }
 
 /* ===============================
-   CARGA DE ARCHIVOS
+   FILES
 ================================ */
 function loadFile(e) {
   const f = e.target.files[0];
@@ -336,41 +321,22 @@ function loadFile(e) {
 }
 
 /* ===============================
-   PWA INSTALL PROMPT
+   INSTALL MANUAL
 ================================ */
-let deferredPrompt;
-const banner = document.getElementById("installBanner");
-
-window.addEventListener("beforeinstallprompt", (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  banner.style.display = "flex";
-});
-
 function installApp() {
-  banner.style.display = "none";
-
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.finally(() => {
-      deferredPrompt = null;
-    });
-  } else {
-    alert(
-      "En iPhone:\n" +
-      "1. Pulsa el botón Compartir\n" +
-      "2. Elige 'Agregar a pantalla de inicio'"
-    );
-  }
+  alert(
+    "Android:\n" +
+    "• Menú ⋮ → Instalar app\n\n" +
+    "iPhone:\n" +
+    "• Compartir → Agregar a pantalla de inicio"
+  );
 }
 
 /* ===============================
    SERVICE WORKER
 ================================ */
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js", { scope: "./" })
-    .then(() => console.log("🟢 Service Worker registrado"))
-    .catch(err => console.error("❌ Error SW", err));
+  navigator.serviceWorker.register("service-worker.js", { scope: "./" });
 }
 </script>
 
