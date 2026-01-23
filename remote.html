@@ -7,6 +7,7 @@
 
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#0f172a">
 
 <style>
@@ -215,7 +216,7 @@ footer {
 </div>
 
 <footer>
-  Creaciones Manotas - Ver. 1.5
+  Creaciones Manotas - Ver. 1.6
 </footer>
 
 <!-- INSTALL BANNER -->
@@ -224,34 +225,54 @@ footer {
   <button onclick="installApp()">Instalar</button>
 </div>
 
-<!-- DOCX -->
 <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
 
 <script>
 /* ===============================
-   WEBSOCKET
+   WEBSOCKET ROBUSTO (PWA SAFE)
 ================================ */
-const socket = new WebSocket("wss://teleprompter-ws-5ziy.onrender.com");
+const WS_URL = "wss://teleprompter-ws-5ziy.onrender.com";
+
+let socket;
+let socketReady = false;
 let speed = 0;
 let fullText = "";
 
-/* ===============================
-   RECIBIR ESTADO
-================================ */
-socket.onmessage = e => {
-  const data = JSON.parse(e.data);
-  if (data.action !== "status") return;
-  if (data.pin !== pin.value) return;
+function connectSocket() {
+  socket = new WebSocket(WS_URL);
 
-  const p = Math.min(100, (data.y / data.total) * 100);
-  progress.value = p;
-  spd.innerText = data.speed;
+  socket.onopen = () => {
+    socketReady = true;
+    console.log("🟢 Control conectado");
+  };
 
-  const remaining = (data.total - data.y) / (data.speed * 30 || 1);
-  time.innerText = Math.max(0, Math.round(remaining)) + " s";
+  socket.onclose = () => {
+    socketReady = false;
+    console.warn("⚠️ Control desconectado. Reintentando…");
+    setTimeout(connectSocket, 2000);
+  };
 
-  updateBlocks(p);
-};
+  socket.onerror = () => {
+    socketReady = false;
+  };
+
+  socket.onmessage = e => {
+    const data = JSON.parse(e.data);
+    if (data.action !== "status") return;
+    if (data.pin !== pin.value) return;
+
+    const p = Math.min(100, (data.y / data.total) * 100);
+    progress.value = p;
+    spd.innerText = data.speed;
+
+    const remaining = (data.total - data.y) / (data.speed * 30 || 1);
+    time.innerText = Math.max(0, Math.round(remaining)) + " s";
+
+    updateBlocks(p);
+  };
+}
+
+connectSocket();
 
 /* ===============================
    BLOQUES DE TEXTO
@@ -264,9 +285,14 @@ function updateBlocks(p) {
 }
 
 /* ===============================
-   ENVIAR COMANDOS
+   ENVÍO PROTEGIDO
 ================================ */
 function send(action, value = null) {
+  if (!socketReady) {
+    alert("Conectando… intenta de nuevo en un segundo");
+    return;
+  }
+
   socket.send(JSON.stringify({
     action,
     value,
