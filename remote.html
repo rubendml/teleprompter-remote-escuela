@@ -5,6 +5,10 @@
 <title>Teleprompter Pro</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
+
 <style>
 :root {
   --bg: #0f172a;
@@ -133,6 +137,32 @@ footer {
   font-weight: bold;
   color: var(--brand);
 }
+
+/* INSTALL BANNER */
+#installBanner {
+  position: fixed;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: #e5e7eb;
+  padding: 10px 14px;
+  border-radius: 12px;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 10px 20px rgba(0,0,0,.4);
+  z-index: 1000;
+}
+
+#installBanner button {
+  background: #22c55e;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-weight: bold;
+  cursor: pointer;
+}
 </style>
 </head>
 
@@ -185,8 +215,14 @@ footer {
 </div>
 
 <footer>
-  Creaciones Manotas - 2026
+  Creaciones Manotas
 </footer>
+
+<!-- INSTALL BANNER -->
+<div id="installBanner">
+  <span>📲 Instálame para usarme como app</span>
+  <button onclick="installApp()">Instalar</button>
+</div>
 
 <!-- DOCX -->
 <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
@@ -205,7 +241,7 @@ let fullText = "";
 socket.onmessage = e => {
   const data = JSON.parse(e.data);
   if (data.action !== "status") return;
-  if (data.pin !== document.getElementById("pin").value) return;
+  if (data.pin !== pin.value) return;
 
   const p = Math.min(100, (data.y / data.total) * 100);
   progress.value = p;
@@ -274,12 +310,41 @@ function loadFile(e) {
 }
 
 /* ===============================
-   PWA — SERVICE WORKER
+   PWA INSTALL PROMPT
+================================ */
+let deferredPrompt;
+const banner = document.getElementById("installBanner");
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  banner.style.display = "flex";
+});
+
+function installApp() {
+  banner.style.display = "none";
+
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.finally(() => {
+      deferredPrompt = null;
+    });
+  } else {
+    alert(
+      "En iPhone:\n" +
+      "1. Pulsa el botón Compartir\n" +
+      "2. Elige 'Agregar a pantalla de inicio'"
+    );
+  }
+}
+
+/* ===============================
+   SERVICE WORKER
 ================================ */
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js")
-    .then(() => console.log("🟢 Service Worker registrado (PWA lista)"))
-    .catch(err => console.error("❌ Error Service Worker", err));
+  navigator.serviceWorker.register("service-worker.js", { scope: "./" })
+    .then(() => console.log("🟢 Service Worker registrado"))
+    .catch(err => console.error("❌ Error SW", err));
 }
 </script>
 
