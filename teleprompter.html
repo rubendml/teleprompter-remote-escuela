@@ -14,26 +14,27 @@ html, body {
   overflow: hidden;
 }
 
-/* Contenedor */
+/* CONTENEDOR */
 #container {
   position: relative;
 }
 
-/* Texto principal */
+/* TEXTO PRINCIPAL */
 #text {
   font-size: 64px;
   line-height: 1.5;
   padding: 14vh 12vw;
   white-space: pre-wrap;
   transform-origin: center;
+  display: none; /* oculto al inicio */
 }
 
-/* Espejo */
+/* ESPEJO */
 .mirror {
   transform: scaleX(-1);
 }
 
-/* Línea guía */
+/* LÍNEA GUÍA */
 #guide {
   position: fixed;
   top: 50%;
@@ -44,9 +45,39 @@ html, body {
   pointer-events: none;
 }
 
-/* Modo cámara */
+/* MODO CÁMARA */
 .camera #guide {
   display: block;
+}
+
+/* BIENVENIDA */
+#welcome {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  padding: 20px;
+}
+
+#welcome img {
+  max-width: 300px;
+  width: 60%;
+  height: auto;
+}
+
+#welcome a {
+  color: #ffd700;
+  font-size: 20px;
+  text-decoration: none;
+}
+
+#welcome p {
+  font-size: 26px;
+  opacity: 0.85;
 }
 </style>
 </head>
@@ -54,8 +85,22 @@ html, body {
 <body>
 
 <div id="container">
-  <div id="text" class="mirror">Esperando texto…</div>
+
+  <!-- BIENVENIDA -->
+  <div id="welcome">
+    <img src="logo-escuela.svg" alt="Logo Escuela Judicial">
+    <a href="https://escuelajudicial.ramajudicial.gov.co/" target="_blank">
+      escuelajudicial.ramajudicial.gov.co
+    </a>
+    <p>Esperando texto…</p>
+  </div>
+
+  <!-- TEXTO -->
+  <div id="text" class="mirror"></div>
+
+  <!-- GUÍA -->
   <div id="guide"></div>
+
 </div>
 
 <script>
@@ -66,13 +111,16 @@ const WS_URL = "wss://teleprompter-ws-5ziy.onrender.com";
 const PIN = "1234";
 
 /* ===============================
-   VARIABLES
+   ELEMENTOS
 ================================ */
 const textEl = document.getElementById("text");
+const welcomeEl = document.getElementById("welcome");
 
+/* ===============================
+   VARIABLES
+================================ */
 let socket;
 let socketReady = false;
-
 let scrollSpeed = 0;
 let yPos = 0;
 let lastTime = null;
@@ -89,13 +137,9 @@ function connectSocket() {
     console.log("🟢 WebSocket conectado");
   };
 
-  socket.onerror = (err) => {
-    console.error("🔴 Error WebSocket:", err);
-  };
-
   socket.onclose = () => {
     socketReady = false;
-    console.warn("⚠️ WebSocket cerrado. Reintentando en 2s…");
+    console.warn("⚠️ WebSocket cerrado. Reintentando…");
     setTimeout(connectSocket, 2000);
   };
 
@@ -103,25 +147,33 @@ function connectSocket() {
     const data = JSON.parse(event.data);
     if (data.pin !== PIN) return;
 
-    switch (data.action) {
-
-      case "text":
-        textEl.innerText = data.value || "";
+    if (data.action === "text") {
+      if (data.value && data.value.trim() !== "") {
+        // Mostrar texto
+        textEl.innerText = data.value;
+        textEl.style.display = "block";
+        welcomeEl.style.display = "none";
         yPos = 0;
         window.scrollTo(0, 0);
+
         setTimeout(() => {
           totalHeight = document.body.scrollHeight;
         }, 100);
-        break;
+      } else {
+        // Volver a bienvenida
+        textEl.innerText = "";
+        textEl.style.display = "none";
+        welcomeEl.style.display = "flex";
+      }
+    }
 
-      case "speed":
-        scrollSpeed = Number(data.value) || 0;
-        break;
+    if (data.action === "speed") {
+      scrollSpeed = Number(data.value) || 0;
+    }
 
-      case "camera":
-        document.body.classList.toggle("camera");
-        textEl.classList.toggle("mirror");
-        break;
+    if (data.action === "camera") {
+      document.body.classList.toggle("camera");
+      textEl.classList.toggle("mirror");
     }
   };
 }
@@ -129,7 +181,7 @@ function connectSocket() {
 connectSocket();
 
 /* ===============================
-   SCROLL ULTRA SUAVE + ESTADO
+   SCROLL + ENVÍO DE ESTADO
 ================================ */
 function animate(timestamp) {
   if (!lastTime) lastTime = timestamp;
@@ -139,7 +191,6 @@ function animate(timestamp) {
   yPos += scrollSpeed * delta * 0.06;
   window.scrollTo(0, yPos);
 
-  /* Enviar estado SOLO si hay conexión */
   if (socketReady && totalHeight > 0) {
     socket.send(JSON.stringify({
       action: "status",
