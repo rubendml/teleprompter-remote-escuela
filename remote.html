@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Mando Teleprompter</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body {
+  background: #111;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 20px;
+}
+button {
+  width: 100%;
+  padding: 18px;
+  margin: 10px 0;
+  font-size: 20px;
+  border: none;
+  border-radius: 10px;
+}
+.play { background: #2ecc71; }
+.pause { background: #e74c3c; }
+.speed { background: #3498db; }
+.move { background: #9b59b6; }
+.font { background: #f39c12; }
+</style>
+</head>
+<body>
+
+<h2>🎮 Control Teleprompter</h2>
+
+<button class="play" onclick="send('play')">▶ Play</button>
+<button class="pause" onclick="send('pause')">⏸ Pausa</button>
+
+<button class="speed" onclick="setSpeed(1)">Velocidad +</button>
+<button class="speed" onclick="setSpeed(-1)">Velocidad -</button>
+
+<button class="move" onclick="send('up')">⬆ Subir</button>
+<button class="move" onclick="send('down')">⬇ Bajar</button>
+
+<button class="font" onclick="setFont(8)">Letra +</button>
+<button class="font" onclick="setFont(-8)">Letra -</button>
+
+<script>
+const socket = new WebSocket("wss://TU-SERVIDOR.onrender.com");
+
+let speed = 1;
+let font = 64;
+
+function send(action, value = null) {
+  socket.send(JSON.stringify({ action, value }));
+}
+
+function setSpeed(delta) {
+  speed += delta;
+  send("speed", speed);
+}
+
+function setFont(delta) {
+  font += delta;
+  send("font", font);
+}
+</script>
+
+</body>
+</html>

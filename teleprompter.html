@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Teleprompter</title>
+<style>
+body {
+  margin: 0;
+  background: black;
+  color: white;
+  font-family: Arial, sans-serif;
+  overflow: hidden;
+}
+#text {
+  font-size: 64px;
+  line-height: 1.4;
+  padding: 10vh 8vw;
+  white-space: pre-wrap;
+}
+.mirror {
+  transform: scaleX(-1);
+}
+</style>
+</head>
+<body>
+
+<div id="text" class="mirror">
+Pega aquí tu texto del teleprompter.
+
+Puedes editar directamente este archivo
+o luego lo hacemos dinámico 😉
+</div>
+
+<script>
+const socket = new WebSocket("wss://TU-SERVIDOR.onrender.com");
+
+const text = document.getElementById("text");
+let speed = 0;
+let scrollInterval = null;
+
+function startScroll() {
+  stopScroll();
+  scrollInterval = setInterval(() => {
+    window.scrollBy(0, speed);
+  }, 30);
+}
+
+function stopScroll() {
+  if (scrollInterval) clearInterval(scrollInterval);
+}
+
+socket.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+
+  if (data.action === "play") startScroll();
+  if (data.action === "pause") stopScroll();
+  if (data.action === "speed") speed = data.value;
+  if (data.action === "up") window.scrollBy(0, -100);
+  if (data.action === "down") window.scrollBy(0, 100);
+  if (data.action === "font") text.style.fontSize = data.value + "px";
+};
+</script>
+
+</body>
+</html>
