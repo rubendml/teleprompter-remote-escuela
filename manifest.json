@@ -1,0 +1,17 @@
+{
+  "name": "Teleprompter Escuela Judicial RLB",
+  "short_name": "Teleprompter-EJRLB",
+  "description": "Teleprompter profesional con control remoto",
+  "start_url": "/teleprompter-remote-escuela/remote.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "logo-escuela.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -42,7 +42,6 @@ html, body {
   height: 2px;
   background: rgba(255,255,255,0.25);
   pointer-events: none;
-  display: none;
 }
 
 /* Modo cámara */
@@ -69,57 +68,65 @@ const PIN = "1234";
 /* ===============================
    VARIABLES
 ================================ */
-const socket = new WebSocket(WS_URL);
 const textEl = document.getElementById("text");
+
+let socket;
+let socketReady = false;
 
 let scrollSpeed = 0;
 let yPos = 0;
 let lastTime = null;
 let totalHeight = 0;
-let socketReady = false;
 
 /* ===============================
-   WEBSOCKET
+   CONEXIÓN WEBSOCKET ROBUSTA
 ================================ */
-socket.onopen = () => {
-  socketReady = true;
-  console.log("🟢 Teleprompter conectado (envío habilitado)");
-};
+function connectSocket() {
+  socket = new WebSocket(WS_URL);
 
-socket.onerror = (err) => {
-  console.error("🔴 Error WebSocket:", err);
-};
+  socket.onopen = () => {
+    socketReady = true;
+    console.log("🟢 WebSocket conectado");
+  };
 
-socket.onclose = () => {
-  socketReady = false;
-  console.warn("⚠️ WebSocket cerrado");
-};
+  socket.onerror = (err) => {
+    console.error("🔴 Error WebSocket:", err);
+  };
 
-socket.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  if (data.pin !== PIN) return;
+  socket.onclose = () => {
+    socketReady = false;
+    console.warn("⚠️ WebSocket cerrado. Reintentando en 2s…");
+    setTimeout(connectSocket, 2000);
+  };
 
-  switch (data.action) {
+  socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.pin !== PIN) return;
 
-    case "text":
-      textEl.innerText = data.value || "";
-      yPos = 0;
-      window.scrollTo(0, 0);
-      setTimeout(() => {
-        totalHeight = document.body.scrollHeight;
-      }, 100);
-      break;
+    switch (data.action) {
 
-    case "speed":
-      scrollSpeed = Number(data.value) || 0;
-      break;
+      case "text":
+        textEl.innerText = data.value || "";
+        yPos = 0;
+        window.scrollTo(0, 0);
+        setTimeout(() => {
+          totalHeight = document.body.scrollHeight;
+        }, 100);
+        break;
 
-    case "camera":
-      document.body.classList.toggle("camera");
-      textEl.classList.toggle("mirror");
-      break;
-  }
-};
+      case "speed":
+        scrollSpeed = Number(data.value) || 0;
+        break;
+
+      case "camera":
+        document.body.classList.toggle("camera");
+        textEl.classList.toggle("mirror");
+        break;
+    }
+  };
+}
+
+connectSocket();
 
 /* ===============================
    SCROLL ULTRA SUAVE + ESTADO
@@ -132,7 +139,7 @@ function animate(timestamp) {
   yPos += scrollSpeed * delta * 0.06;
   window.scrollTo(0, yPos);
 
-  /* Enviar estado SOLO si el socket está listo */
+  /* Enviar estado SOLO si hay conexión */
   if (socketReady && totalHeight > 0) {
     socket.send(JSON.stringify({
       action: "status",

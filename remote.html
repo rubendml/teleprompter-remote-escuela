@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Control Teleprompter</title>
+<title>Teleprompter Pro</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -17,9 +17,7 @@
   --brand: #ffd700;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
@@ -42,7 +40,7 @@ header img {
   max-width: 140px;
 }
 
-/* CONTENIDO */
+/* MAIN */
 main {
   flex: 1;
   padding: 16px;
@@ -80,7 +78,7 @@ textarea {
   min-height: 90px;
 }
 
-/* BOTONES */
+/* BUTTONS */
 .buttons {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -97,16 +95,14 @@ button {
   transition: transform .1s ease, opacity .2s;
 }
 
-button:active {
-  transform: scale(.97);
-}
+button:active { transform: scale(.97); }
 
-.send { background: var(--accent); color: #022c22; }
-.camera { background: var(--warn); color: #3a2500; }
-.plus { background: var(--info); }
-.minus { background: #475569; }
+.send   { background: var(--accent); color: #022c22; }
+.camera { background: var(--warn);   color: #3a2500; }
+.plus   { background: var(--info); }
+.minus  { background: #475569; }
 
-/* PRESENTADOR */
+/* PRESENTER */
 .presenter small {
   color: var(--muted);
   display: block;
@@ -148,8 +144,10 @@ footer {
 
 <main>
 
+<!-- VISTA PRESENTADOR -->
 <div class="card presenter">
   <h3>🎤 Vista del presentador</h3>
+
   <small>Actual</small>
   <div id="current">---</div>
 
@@ -163,12 +161,14 @@ footer {
   <progress id="progress" value="0" max="100"></progress>
 </div>
 
+<!-- TEXTO -->
 <div class="card">
   <h3>📄 Texto</h3>
   <input type="file" accept=".txt,.md,.docx" onchange="loadFile(event)">
-  <textarea id="script"></textarea>
+  <textarea id="script" placeholder="Pega o carga el texto…"></textarea>
 </div>
 
+<!-- CONTROLES -->
 <div class="card buttons">
   <button class="send" onclick="sendText()">📤 Enviar</button>
   <button class="camera" onclick="toggleCamera()">🎥 Cámara</button>
@@ -188,13 +188,20 @@ footer {
   Creaciones Manotas
 </footer>
 
+<!-- DOCX -->
 <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
 
 <script>
+/* ===============================
+   WEBSOCKET
+================================ */
 const socket = new WebSocket("wss://teleprompter-ws-5ziy.onrender.com");
 let speed = 0;
 let fullText = "";
 
+/* ===============================
+   RECIBIR ESTADO
+================================ */
 socket.onmessage = e => {
   const data = JSON.parse(e.data);
   if (data.action !== "status") return;
@@ -203,12 +210,16 @@ socket.onmessage = e => {
   const p = Math.min(100, (data.y / data.total) * 100);
   progress.value = p;
   spd.innerText = data.speed;
-  time.innerText =
-    Math.max(0, Math.round((data.total - data.y) / (data.speed * 30 || 1))) + " s";
+
+  const remaining = (data.total - data.y) / (data.speed * 30 || 1);
+  time.innerText = Math.max(0, Math.round(remaining)) + " s";
 
   updateBlocks(p);
 };
 
+/* ===============================
+   BLOQUES DE TEXTO
+================================ */
 function updateBlocks(p) {
   const parts = fullText.split("\n\n");
   const i = Math.floor((p / 100) * parts.length);
@@ -216,6 +227,9 @@ function updateBlocks(p) {
   next.innerText = parts[i + 1] || "";
 }
 
+/* ===============================
+   ENVIAR COMANDOS
+================================ */
 function send(action, value = null) {
   socket.send(JSON.stringify({
     action,
@@ -238,6 +252,9 @@ function changeSpeed(d) {
   send("speed", speed);
 }
 
+/* ===============================
+   CARGA DE ARCHIVOS
+================================ */
 function loadFile(e) {
   const f = e.target.files[0];
   if (!f) return;
@@ -254,6 +271,15 @@ function loadFile(e) {
   };
 
   ext === "docx" ? r.readAsArrayBuffer(f) : r.readAsText(f);
+}
+
+/* ===============================
+   PWA — SERVICE WORKER
+================================ */
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js")
+    .then(() => console.log("🟢 Service Worker registrado (PWA lista)"))
+    .catch(err => console.error("❌ Error Service Worker", err));
 }
 </script>
 
