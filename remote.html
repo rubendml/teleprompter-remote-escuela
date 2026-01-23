@@ -12,146 +12,100 @@
 
 <style>
 :root {
-  --bg: #0f172a;
-  --card: #1e293b;
-  --text: #e5e7eb;
-  --muted: #94a3b8;
-  --accent: #22c55e;
-  --warn: #f59e0b;
-  --info: #8b5cf6;
-  --brand: #ffd700;
+  --bg:#0f172a;
+  --card:#1e293b;
+  --text:#e5e7eb;
+  --muted:#94a3b8;
+  --accent:#22c55e;
+  --warn:#f59e0b;
+  --info:#8b5cf6;
+  --brand:#ffd700;
 }
-
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
 }
-
-/* HEADER */
-header {
-  display: flex;
-  justify-content: flex-end;
-  padding: 12px 16px;
+header{
+  display:flex;
+  justify-content:flex-end;
+  padding:12px 16px;
 }
-
-header img {
-  max-width: 140px;
+header img{max-width:140px}
+main{
+  flex:1;
+  padding:16px;
+  display:grid;
+  gap:14px;
 }
-
-/* MAIN */
-main {
-  flex: 1;
-  padding: 16px;
-  display: grid;
-  gap: 14px;
+.card{
+  background:var(--card);
+  border-radius:14px;
+  padding:14px;
+  box-shadow:0 10px 20px rgba(0,0,0,.25);
 }
-
-/* CARD */
-.card {
-  background: var(--card);
-  border-radius: 14px;
-  padding: 14px;
-  box-shadow: 0 10px 20px rgba(0,0,0,.25);
+.card h3{
+  margin:0 0 10px;
+  font-size:14px;
+  color:var(--muted);
 }
-
-.card h3 {
-  margin: 0 0 10px;
-  font-size: 14px;
-  color: var(--muted);
+textarea,input{
+  width:100%;
+  background:#020617;
+  color:var(--text);
+  border:1px solid #334155;
+  border-radius:10px;
+  padding:10px;
+  font-size:15px;
 }
-
-/* INPUTS */
-textarea, input {
-  width: 100%;
-  background: #020617;
-  color: var(--text);
-  border: 1px solid #334155;
-  border-radius: 10px;
-  padding: 10px;
-  font-size: 15px;
+textarea{min-height:90px}
+.buttons{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
 }
-
-textarea {
-  resize: vertical;
-  min-height: 90px;
+button{
+  border:none;
+  border-radius:12px;
+  padding:14px;
+  font-size:16px;
+  font-weight:600;
+  cursor:pointer;
 }
-
-/* BUTTONS */
-.buttons {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+.send{background:var(--accent);color:#022c22}
+.camera{background:var(--warn);color:#3a2500}
+.plus{background:var(--info)}
+.minus{background:#475569}
+.presenter small{color:var(--muted);display:block}
+.presenter progress{width:100%;height:10px;margin-top:8px}
+.pin-box{margin:0 16px 8px}
+.pin-box small{color:var(--muted);display:block;margin-bottom:4px}
+footer{
+  text-align:center;
+  padding:10px;
+  font-size:17px;
+  font-weight:bold;
+  color:var(--brand);
 }
-
-button {
-  border: none;
-  border-radius: 12px;
-  padding: 14px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
+#installBtn{
+  margin:8px auto 0;
+  display:block;
+  background:transparent;
+  color:#94a3b8;
+  border:1px dashed #475569;
+  border-radius:10px;
+  padding:8px 14px;
+  font-size:14px;
+  cursor:pointer;
 }
-
-.send   { background: var(--accent); color: #022c22; }
-.camera { background: var(--warn);   color: #3a2500; }
-.plus   { background: var(--info); }
-.minus  { background: #475569; }
-
-/* PRESENTER */
-.presenter small {
-  color: var(--muted);
-  display: block;
-}
-
-.presenter progress {
-  width: 100%;
-  height: 10px;
-  margin-top: 8px;
-}
-
-/* PIN */
-.pin-box {
-  margin: 0 16px 8px;
-}
-
-.pin-box small {
-  color: var(--muted);
-  display: block;
-  margin-bottom: 4px;
-}
-
-/* FOOTER */
-footer {
-  text-align: center;
-  padding: 10px;
-  font-size: 17px;
-  font-weight: bold;
-  color: var(--brand);
-}
-
-/* INSTALL BUTTON */
-#installBtn {
-  margin: 8px auto 0;
-  display: block;
-  background: transparent;
-  color: #94a3b8;
-  border: 1px dashed #475569;
-  border-radius: 10px;
-  padding: 8px 14px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-#installBtn:hover {
-  color: #e5e7eb;
-  border-color: #e5e7eb;
+#installBtn:hover{
+  color:#e5e7eb;
+  border-color:#e5e7eb;
 }
 </style>
 </head>
@@ -168,21 +122,18 @@ footer {
   <h3>🎤 Vista del presentador</h3>
   <small>Actual</small>
   <div id="current">---</div>
-
   <small style="margin-top:6px">Siguiente</small>
   <div id="next">---</div>
-
   <small style="margin-top:6px">
     ⏱ <span id="time">--</span> · 🎚 <span id="spd">0</span>
   </small>
-
   <progress id="progress" value="0" max="100"></progress>
 </div>
 
 <div class="card">
   <h3>📄 Texto</h3>
   <input type="file" accept=".txt,.md,.docx" onchange="loadFile(event)">
-  <textarea id="script" placeholder="Pega o carga el texto…"></textarea>
+  <textarea id="script"></textarea>
 </div>
 
 <div class="card buttons">
@@ -208,132 +159,89 @@ footer {
 
 <script>
 /* ===============================
+   INSTALACIÓN DIRECTA ANDROID
+================================ */
+let deferredPrompt = null;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+});
+
+function installApp(){
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.finally(()=>{
+      deferredPrompt = null;
+    });
+  } else {
+    const ua = navigator.userAgent.toLowerCase();
+    if(ua.includes("iphone") || ua.includes("ipad")){
+      alert(
+        "iOS:\n" +
+        "1. Pulsa Compartir\n" +
+        "2. Agregar a pantalla de inicio"
+      );
+    } else {
+      alert(
+        "Usa el menú del navegador para instalar la aplicación"
+      );
+    }
+  }
+}
+
+/* ===============================
    WEBSOCKET ROBUSTO
 ================================ */
-const WS_URL = "wss://teleprompter-ws-5ziy.onrender.com";
+const WS_URL="wss://teleprompter-ws-5ziy.onrender.com";
+let socket, socketReady=false, speed=0, fullText="";
 
-let socket;
-let socketReady = false;
-let speed = 0;
-let fullText = "";
-
-function connectSocket() {
-  socket = new WebSocket(WS_URL);
-
-  socket.onopen = () => socketReady = true;
-
-  socket.onclose = () => {
-    socketReady = false;
-    setTimeout(connectSocket, 2000);
-  };
-
-  socket.onmessage = e => {
-    const data = JSON.parse(e.data);
-    if (data.action !== "status") return;
-    if (data.pin !== pin.value) return;
-
-    const p = Math.min(100, (data.y / data.total) * 100);
-    progress.value = p;
-    spd.innerText = data.speed;
-
-    const remaining = (data.total - data.y) / (data.speed * 30 || 1);
-    time.innerText = Math.max(0, Math.round(remaining)) + " s";
-
+function connectSocket(){
+  socket=new WebSocket(WS_URL);
+  socket.onopen=()=>socketReady=true;
+  socket.onclose=()=>{socketReady=false;setTimeout(connectSocket,2000)};
+  socket.onmessage=e=>{
+    const d=JSON.parse(e.data);
+    if(d.action!=="status"||d.pin!==pin.value)return;
+    const p=Math.min(100,(d.y/d.total)*100);
+    progress.value=p;
+    spd.innerText=d.speed;
+    time.innerText=Math.max(0,Math.round((d.total-d.y)/(d.speed*30||1)))+" s";
     updateBlocks(p);
   };
 }
-
 connectSocket();
 
-/* ===============================
-   BLOQUES
-================================ */
-function updateBlocks(p) {
-  const parts = fullText.split("\n\n");
-  const i = Math.floor((p / 100) * parts.length);
-  current.innerText = parts[i] || "";
-  next.innerText = parts[i + 1] || "";
+function updateBlocks(p){
+  const parts=fullText.split("\n\n");
+  const i=Math.floor((p/100)*parts.length);
+  current.innerText=parts[i]||"";
+  next.innerText=parts[i+1]||"";
 }
 
-/* ===============================
-   ENVÍO
-================================ */
-function send(action, value = null) {
-  if (!socketReady) {
-    alert("Conectando… intenta de nuevo");
-    return;
-  }
-
-  socket.send(JSON.stringify({
-    action,
-    value,
-    pin: pin.value
-  }));
+function send(action,value=null){
+  if(!socketReady){alert("Conectando…");return;}
+  socket.send(JSON.stringify({action,value,pin:pin.value}));
 }
+function sendText(){fullText=script.value;send("text",fullText);}
+function toggleCamera(){send("camera");}
+function changeSpeed(d){speed=Math.max(0,speed+d);send("speed",speed);}
 
-function sendText() {
-  fullText = script.value;
-  send("text", fullText);
-}
-
-function toggleCamera() {
-  send("camera");
-}
-
-function changeSpeed(d) {
-  speed = Math.max(0, speed + d);
-  send("speed", speed);
-}
-
-/* ===============================
-   FILES
-================================ */
-function loadFile(e) {
-  const f = e.target.files[0];
-  if (!f) return;
-  const ext = f.name.split(".").pop().toLowerCase();
-  const r = new FileReader();
-
-  r.onload = ev => {
-    if (ext === "docx") {
-      mammoth.extractRawText({ arrayBuffer: ev.target.result })
-        .then(res => script.value = res.value);
-    } else {
-      script.value = ev.target.result;
-    }
+function loadFile(e){
+  const f=e.target.files[0];if(!f)return;
+  const ext=f.name.split(".").pop().toLowerCase();
+  const r=new FileReader();
+  r.onload=ev=>{
+    if(ext==="docx"){
+      mammoth.extractRawText({arrayBuffer:ev.target.result})
+        .then(res=>script.value=res.value);
+    } else script.value=ev.target.result;
   };
-
-  ext === "docx" ? r.readAsArrayBuffer(f) : r.readAsText(f);
+  ext==="docx"?r.readAsArrayBuffer(f):r.readAsText(f);
 }
 
-/* ===============================
-   INSTALL MANUAL
-================================ */
-function installApp() {
-  const ua = navigator.userAgent.toLowerCase();
-
-  if (ua.includes("android")) {
-    alert(
-      "Android:\n" +
-      "Menú ⋮ del navegador → Instalar aplicación"
-    );
-  } else if (ua.includes("iphone") || ua.includes("ipad")) {
-    alert(
-      "iOS:\n" +
-      "Compartir → Agregar a pantalla de inicio"
-    );
-  } else {
-    alert(
-      "Usa la opción «Instalar aplicación» del navegador"
-    );
-  }
-}
-
-/* ===============================
-   SERVICE WORKER
-================================ */
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js", { scope: "./" });
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("service-worker.js",{scope:"./"});
 }
 </script>
 
