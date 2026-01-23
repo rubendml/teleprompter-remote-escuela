@@ -14,10 +14,12 @@ html, body {
   overflow: hidden;
 }
 
+/* Contenedor */
 #container {
   position: relative;
 }
 
+/* Texto principal */
 #text {
   font-size: 64px;
   line-height: 1.5;
@@ -26,10 +28,12 @@ html, body {
   transform-origin: center;
 }
 
+/* Espejo */
 .mirror {
   transform: scaleX(-1);
 }
 
+/* Línea guía */
 #guide {
   position: fixed;
   top: 50%;
@@ -38,8 +42,10 @@ html, body {
   height: 2px;
   background: rgba(255,255,255,0.25);
   pointer-events: none;
+  display: none;
 }
 
+/* Modo cámara */
 .camera #guide {
   display: block;
 }
@@ -54,9 +60,15 @@ html, body {
 </div>
 
 <script>
+/* ===============================
+   CONFIGURACIÓN
+================================ */
 const WS_URL = "wss://teleprompter-ws-5ziy.onrender.com";
 const PIN = "1234";
 
+/* ===============================
+   VARIABLES
+================================ */
 const socket = new WebSocket(WS_URL);
 const textEl = document.getElementById("text");
 
@@ -64,48 +76,72 @@ let scrollSpeed = 0;
 let yPos = 0;
 let lastTime = null;
 let totalHeight = 0;
+let socketReady = false;
 
-/* Recepción */
-socket.onmessage = e => {
-  const data = JSON.parse(e.data);
+/* ===============================
+   WEBSOCKET
+================================ */
+socket.onopen = () => {
+  socketReady = true;
+  console.log("🟢 Teleprompter conectado (envío habilitado)");
+};
+
+socket.onerror = (err) => {
+  console.error("🔴 Error WebSocket:", err);
+};
+
+socket.onclose = () => {
+  socketReady = false;
+  console.warn("⚠️ WebSocket cerrado");
+};
+
+socket.onmessage = (event) => {
+  const data = JSON.parse(event.data);
   if (data.pin !== PIN) return;
 
-  if (data.action === "text") {
-    textEl.innerText = data.value || "";
-    yPos = 0;
-    window.scrollTo(0, 0);
-    setTimeout(() => {
-      totalHeight = document.body.scrollHeight;
-    }, 100);
-  }
+  switch (data.action) {
 
-  if (data.action === "speed") {
-    scrollSpeed = Number(data.value) || 0;
-  }
+    case "text":
+      textEl.innerText = data.value || "";
+      yPos = 0;
+      window.scrollTo(0, 0);
+      setTimeout(() => {
+        totalHeight = document.body.scrollHeight;
+      }, 100);
+      break;
 
-  if (data.action === "camera") {
-    document.body.classList.toggle("camera");
-    textEl.classList.toggle("mirror");
+    case "speed":
+      scrollSpeed = Number(data.value) || 0;
+      break;
+
+    case "camera":
+      document.body.classList.toggle("camera");
+      textEl.classList.toggle("mirror");
+      break;
   }
 };
 
-/* Scroll + estado */
-function animate(t) {
-  if (!lastTime) lastTime = t;
-  const delta = t - lastTime;
-  lastTime = t;
+/* ===============================
+   SCROLL ULTRA SUAVE + ESTADO
+================================ */
+function animate(timestamp) {
+  if (!lastTime) lastTime = timestamp;
+  const delta = timestamp - lastTime;
+  lastTime = timestamp;
 
   yPos += scrollSpeed * delta * 0.06;
   window.scrollTo(0, yPos);
 
-  // Enviar estado al control
-  socket.send(JSON.stringify({
-    action: "status",
-    pin: PIN,
-    y: yPos,
-    total: totalHeight,
-    speed: scrollSpeed
-  }));
+  /* Enviar estado SOLO si el socket está listo */
+  if (socketReady && totalHeight > 0) {
+    socket.send(JSON.stringify({
+      action: "status",
+      pin: PIN,
+      y: yPos,
+      total: totalHeight,
+      speed: scrollSpeed
+    }));
+  }
 
   requestAnimationFrame(animate);
 }
