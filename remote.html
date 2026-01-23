@@ -39,7 +39,8 @@ button {
 
 <h2>🎮 Control Teleprompter</h2>
 
-<input type="file" accept=".txt,.md" onchange="loadFile(event)">
+<!-- CARGA DE ARCHIVOS -->
+<input type="file" accept=".txt,.md,.docx" onchange="loadFile(event)">
 
 <textarea id="script" rows="8" placeholder="Escribe o pega el texto aquí…"></textarea>
 
@@ -49,6 +50,9 @@ button {
 
 <button class="purple" onclick="changeSpeed(0.5)">➕ Velocidad</button>
 <button class="purple" onclick="changeSpeed(-0.5)">➖ Velocidad</button>
+
+<!-- LIBRERÍA DOCX -->
+<script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
 
 <script>
 const socket = new WebSocket("wss://teleprompter-ws-5ziy.onrender.com");
@@ -76,15 +80,37 @@ function changeSpeed(delta) {
   send("speed", speed);
 }
 
+/* CARGA DE ARCHIVOS */
 function loadFile(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = e => {
-    document.getElementById("script").value = e.target.result;
-  };
-  reader.readAsText(file);
+  const ext = file.name.split(".").pop().toLowerCase();
+
+  // TXT o MD
+  if (ext === "txt" || ext === "md") {
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById("script").value = e.target.result;
+    };
+    reader.readAsText(file);
+  }
+
+  // DOCX
+  if (ext === "docx") {
+    const reader = new FileReader();
+    reader.onload = e => {
+      mammoth.extractRawText({ arrayBuffer: e.target.result })
+        .then(result => {
+          document.getElementById("script").value = result.value;
+        })
+        .catch(err => {
+          alert("Error leyendo el archivo DOCX");
+          console.error(err);
+        });
+    };
+    reader.readAsArrayBuffer(file);
+  }
 }
 </script>
 
